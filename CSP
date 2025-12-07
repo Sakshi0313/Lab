@@ -1,0 +1,72 @@
+#include <stdio.h>
+#include <stdbool.h>
+
+#define V 5
+
+int color[V] = {0};
+
+bool isSafe(int v, int graph[V][V], int c){
+    for(int i=0; i<V; i++){
+        if(graph[v][i] && c == color[i]) return false;
+    }
+    return true;
+}
+
+void printSolution(){
+    printf("Solution Exists: \n");
+    printf("Assigned Colors: \n");
+    
+    for(int i=0; i<V; i++){
+        printf("%d ", color[i]);
+    }
+
+    printf("\n");
+}
+
+bool cspColoring(int graph[V][V], int m, int v)
+{
+    if(v == V) return true;
+
+    for(int c=1; c<=m; c++){
+        if(isSafe(v, graph, c)){
+            // seting the color to vertex
+            color[v] = c;
+
+            // exploring this color for further vertices
+            if(cspColoring(graph, m, v+1)) return true;
+
+            // if no valid solution is found remove the assigned color
+            color[v] = 0;
+        }
+    }
+
+    // if no any color satisfies the current vertex's constraint
+    return false;
+}
+
+int main(){
+
+    // input graph
+    int graph[V][V] = {
+        {0, 1, 1, 0, 0},
+        {1, 0, 1, 0, 0},
+        {1, 1, 0, 1, 0},
+        {0, 0, 1, 0, 1},
+        {0, 1, 0, 1, 0},
+    };
+
+    // no. of colors
+    int m = 3; 
+
+    // csp function call to color the graph
+    bool result = cspColoring(graph, m, 0);
+
+    if(result){
+        printSolution();
+    }
+    else{
+        printf("No valid solution for the graph with %d colors.", &m);
+    }
+
+    return 0;
+}
