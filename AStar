@@ -1,0 +1,111 @@
+#include <stdio.h>
+#include <limits.h>
+#include <stdbool.h>
+
+#define MAX 100
+#define INF INT_MAX
+
+int graph[MAX][MAX];
+int heuristic[MAX];
+int parent[MAX];
+int dist[MAX];
+bool visited[MAX];
+int n; 
+
+// Find node with minimum f = g + h (linear search)
+int getMinNode() {
+    int minNode = -1;
+    int minF = INF;
+    for (int i = 0; i < n; i++) {
+        if (!visited[i] && dist[i] != INF) {
+            int f = dist[i] + heuristic[i];
+            if (f < minF) {
+                minF = f;
+                minNode = i;
+            }
+        }
+    }
+    return minNode;
+}
+
+// Print path from start to goal
+void printPath(int goal) {
+    if (parent[goal] == -1) {
+        printf("%d ", goal);
+        return;
+    }
+    printPath(parent[goal]);
+    printf("-> %d ", goal);
+}
+
+// A* algorithm
+void aStar(int start, int goal) {
+    for (int i = 0; i < n; i++) {
+        dist[i] = INF;
+        parent[i] = -1;
+        visited[i] = false;
+    }
+    dist[start] = 0;
+
+    while (true) 
+    {
+        int u = getMinNode();
+        if (u == -1) break;        // no more reachable nodes
+        if (u == goal) break;      // goal reached
+        visited[u] = true;
+
+        for (int v = 0; v < n; v++) {
+            if (graph[u][v] != INF) {
+                int cost = graph[u][v];
+                if (dist[u] + cost < dist[v]) {
+                    dist[v] = dist[u] + cost;
+                    parent[v] = u;
+                }
+            }
+        }
+    }
+
+    if (dist[goal] == INF) {
+        printf("No path found!\n");
+    } else {
+        printf("Shortest path cost = %d\n", dist[goal]);
+        printf("Path: ");
+        printPath(goal);
+        printf("\n");
+    }
+}
+
+int main() {
+    int edges, u, v, cost, start, goal;
+
+    printf("Enter number of vertices: ");
+    scanf("%d", &n);
+
+    // Initialize adjacency matrix
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            graph[i][j] = INF;
+        }
+    }
+
+    printf("Enter number of edges: ");
+    scanf("%d", &edges);
+
+    printf("Enter edges (u v cost):\n");
+    for (int i = 0; i < edges; i++) {
+        scanf("%d %d %d", &u, &v, &cost);
+        graph[u][v] = cost; 
+    }
+
+    printf("Enter heuristic values for each vertex:\n");
+    for (int i = 0; i < n; i++) {
+        scanf("%d", &heuristic[i]);
+    }
+
+    printf("Enter start and goal vertices: ");
+    scanf("%d %d", &start, &goal);
+
+    aStar(start, goal);
+
+    return 0;
+}
