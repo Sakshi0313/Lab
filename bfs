@@ -1,0 +1,76 @@
+#include <stdio.h>
+#include <stdbool.h>
+
+#define MAX 100
+
+int n, m;
+int maze[MAX][MAX];
+bool visited[MAX][MAX];
+
+int dRow[] = {-1, 0, 0, 1};
+int dCol[] = {0, -1, 1, 0};
+
+int qRow[MAX*MAX], qCol[MAX*MAX], qDist[MAX*MAX];
+int front = 0, rear = 0;
+
+bool isValid(int r, int c) {
+    return r >= 0 && r < n && c >= 0 && c < m && maze[r][c] == 1 && !visited[r][c];
+}
+
+void BFS(int sr, int sc, int dr, int dc) {
+    visited[sr][sc] = true;
+    qRow[rear] = sr;
+    qCol[rear] = sc;
+    qDist[rear] = 0;
+    rear++;
+
+    while (front < rear) {
+        int r = qRow[front];
+        int c = qCol[front];
+        int dist = qDist[front];
+        front++;
+
+        if (r == dr && c == dc) {
+            printf("Shortest Distance = %d\n", dist);
+            return;
+        }
+
+        for (int i = 0; i < 4; i++) {
+            int nr = r + dRow[i];
+            int nc = c + dCol[i];
+            if (isValid(nr, nc)) {
+                visited[nr][nc] = true;
+                qRow[rear] = nr;
+                qCol[rear] = nc;
+                qDist[rear] = dist + 1;
+                rear++;
+            }
+        }
+    }
+
+    printf("Destination cannot be reached\n");
+}
+
+int main() {
+    printf("Enter rows and cols: ");
+    scanf("%d %d", &n, &m);
+
+    printf("Enter maze (1=path, 0=wall):\n");
+    for (int i = 0; i < n; i++)
+        for (int j = 0; j < m; j++)
+            scanf("%d", &maze[i][j]);
+
+    int sr, sc, dr, dc;
+    printf("Enter source (row col): ");
+    scanf("%d %d", &sr, &sc);
+    printf("Enter destination (row col): ");
+    scanf("%d %d", &dr, &dc);
+
+    // Initialize visited
+    for (int i = 0; i < n; i++)
+        for (int j = 0; j < m; j++)
+            visited[i][j] = false;
+
+    BFS(sr, sc, dr, dc);
+    return 0;
+}
