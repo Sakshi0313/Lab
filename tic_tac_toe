@@ -1,0 +1,198 @@
+#include <stdio.h>
+#include <stdbool.h>
+#include <string.h>
+#include <limits.h>
+
+#define HUMAN 'X'
+#define AI 'O'
+
+char board[3][3];
+char p1[50], p2[50];
+int mode;
+
+// Initialize board
+void initBoard() 
+{
+    for (int i = 0; i < 3; i++)
+        for (int j = 0; j < 3; j++)
+            board[i][j] = ' ';
+}
+
+// Print board
+void printBoard() 
+{
+    printf("\n    1   2   3\n");
+    for (int i = 0; i < 3; i++) 
+    {
+        printf("  |---|---|---|\n%d |", i + 1);
+        for (int j = 0; j < 3; j++)
+            printf(" %c |", board[i][j]);
+        printf("\n");
+    }
+    printf("  |---|---|---|\n");
+}
+
+// Check if any move is left
+bool movesLeft() 
+{
+    for (int i = 0; i < 3; i++)
+        for (int j = 0; j < 3; j++)
+            if (board[i][j] == ' ') return true;
+    return false;
+}
+
+// Evaluate board
+int evaluate() {
+    for (int i = 0; i < 3; i++) 
+    {
+        if (board[i][0]==board[i][1] && board[i][1]==board[i][2]) 
+        {
+            if (board[i][0] == AI) return 10;
+            if (board[i][0] == HUMAN) return -10;
+        }
+        if (board[0][i]==board[1][i] && board[1][i]==board[2][i]) 
+        {
+            if (board[0][i] == AI) return 10;
+            if (board[0][i] == HUMAN) return -10;
+        }
+    }
+    if (board[0][0]==board[1][1] && board[1][1]==board[2][2]) 
+    {
+        if (board[0][0] == AI) return 10;
+        if (board[0][0] == HUMAN) return -10;
+    }
+    if (board[0][2]==board[1][1] && board[1][1]==board[2][0]) 
+    {
+        if (board[0][2] == AI) return 10;
+        if (board[0][2] == HUMAN) return -10;
+    }
+    return 0;
+}
+
+// Minimax
+int minimax(int depth, bool isMax) 
+{
+    int score = evaluate();
+    if (score == 10 || score == -10) return score;
+    if (!movesLeft()) return 0;
+
+    int best = isMax ? INT_MIN : INT_MAX;
+
+    for (int i = 0; i < 3; i++)
+        for (int j = 0; j < 3; j++)
+            if (board[i][j] == ' ') 
+            {
+                board[i][j] = isMax ? AI : HUMAN;
+                int val = minimax(depth + 1, !isMax);
+                board[i][j] = ' ';
+                best = isMax ? (val > best ? val : best)
+                             : (val < best ? val : best);
+            }
+    return best;
+}
+
+// Best AI move
+void bestMove(int *r, int *c) 
+{
+    int bestVal = INT_MIN;
+    *r = *c = -1;
+
+    for (int i = 0; i < 3; i++)
+        for (int j = 0; j < 3; j++)
+            if (board[i][j] == ' ') 
+            {
+                board[i][j] = AI;
+                int val = minimax(0, false);
+                board[i][j] = ' ';
+                if (val > bestVal) 
+                {
+                    bestVal = val;
+                    *r = i;
+                    *c = j;
+                }
+            }
+}
+
+// Check winner
+char checkWin() 
+{
+    int score = evaluate();
+    if (score == 10) return AI;
+    if (score == -10) return HUMAN;
+    return ' ';
+}
+
+void play() 
+{
+    initBoard();
+    printBoard();
+
+    int r, c;
+
+    while (1) 
+    {
+        // --- Human Move ---
+        printf("%s (X), enter row col: ", p1);
+        scanf("%d %d", &r, &c);
+
+        if (r < 1 || r > 3 || c < 1 || c > 3 || board[r-1][c-1] != ' ') 
+        {
+            printf("Invalid move!\n");
+            continue;
+        }
+
+        board[r-1][c-1] = HUMAN;
+        printBoard();
+
+        if (checkWin() == HUMAN) { printf("%s wins!\n", p1); break; }
+        if (!movesLeft()) { printf("Draw!\n"); break; }
+
+        // --- Second Player or AI ---
+        if (mode == 1) 
+        {
+            // Human vs Human
+            printf("%s (O), enter row col: ", p2);
+            scanf("%d %d", &r, &c);
+
+            if (r < 1 || r > 3 || c < 1 || c > 3 || board[r-1][c-1] != ' ') 
+            {
+                printf("Invalid move!\n");
+                continue;
+            }
+
+            board[r-1][c-1] = AI;
+        } 
+        else 
+        {
+            // Human vs AI
+            bestMove(&r, &c);
+            board[r][c] = AI;
+            printf("Computer played at (%d,%d)\n", r+1, c+1);
+        }
+
+        printBoard();
+        if (checkWin() == AI) 
+        { 
+            printf(mode==1 ? "%s wins!\n" : "Computer wins!\n", p2);
+            break; 
+        }
+    }
+}
+
+
+int main() 
+{
+    printf("1. Human vs Human\n2. Human vs AI\nEnter choice: ");
+    scanf("%d", &mode);
+
+    printf("Enter Player 1 name: ");
+    scanf("%s", p1);
+
+    if (mode == 1) {
+        printf("Enter Player 2 name: ");
+        scanf("%s", p2);
+    } else strcpy(p2, "Computer");
+
+    play();
+    return 0;
+}
