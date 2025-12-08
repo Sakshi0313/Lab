@@ -1,0 +1,115 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <limits.h>
+
+#define MAX 100
+#define INF INT_MAX
+
+int n;                        // number of vertices
+int graph[MAX][MAX];          // adjacency matrix (costs)
+int heuristic[MAX];           // heuristic values
+int status[MAX];              // 0 = unsolved, 1 = solved, -1 = processing
+int solution[MAX];            // marks nodes in optimal solution graph
+int nodeType[MAX];            // 0 = OR-node, 1 = AND-node
+
+// Recursive AO* implementation
+int AOStar(int u) {
+    if (status[u] == 1) return heuristic[u];   // already solved
+    if (status[u] == -1) return heuristic[u];  // avoid cycles
+
+    status[u] = -1; // mark as processing
+
+    if (nodeType[u] == 0) {
+        // ---------------- OR Node ----------------
+        int minCost = INF, bestChild = -1;
+        for (int v = 0; v < n; v++) {
+            if (graph[u][v] != INF) {
+                int cost = graph[u][v] + AOStar(v);
+                if (cost < minCost) {
+                    minCost = cost;
+                    bestChild = v;
+                }
+            }
+        }
+        if (bestChild != -1) {
+            heuristic[u] = minCost;
+            solution[u] = 1;
+            solution[bestChild] = 1;
+        }
+    }
+    else {
+        // ---------------- AND Node ----------------
+        int totalCost = 0;
+        int hasChild = 0;
+        for (int v = 0; v < n; v++) {
+            if (graph[u][v] != INF) {
+                totalCost += graph[u][v] + AOStar(v);
+                hasChild = 1;
+                solution[v] = 1;
+            }
+        }
+        if (hasChild) {
+            heuristic[u] = totalCost;
+            solution[u] = 1;
+        }
+    }
+
+    status[u] = 1; // mark as solved
+    return heuristic[u];
+}
+
+// Print the solution graph
+void printSolution() {
+    printf("Optimal Solution Graph (nodes involved):\n");
+    for (int i = 0; i < n; i++) {
+        if (solution[i]) {
+            printf("%d ", i);
+        }
+    }
+    printf("\n");
+}
+
+int main() {
+    int edges, u, v, cost, start;
+
+    printf("Enter number of vertices: ");
+    scanf("%d", &n);
+
+    // Initialize graph
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            graph[i][j] = INF;
+        }
+        status[i] = 0;
+        solution[i] = 0;
+    }
+
+    printf("Enter number of edges: ");
+    scanf("%d", &edges);
+
+    printf("Enter edges (u v cost):\n");
+    for (int i = 0; i < edges; i++) {
+        scanf("%d %d %d", &u, &v, &cost);
+        graph[u][v] = cost; // directed edge
+    }
+
+    printf("Enter heuristic values for each vertex:\n");
+    for (int i = 0; i < n; i++) {
+        scanf("%d", &heuristic[i]);
+    }
+
+    printf("Enter node types (0 = OR, 1 = AND):\n");
+    for (int i = 0; i < n; i++) {
+        scanf("%d", &nodeType[i]);
+    }
+
+    printf("Enter start vertex: ");
+    scanf("%d", &start);
+
+    int costResult = AOStar(start);
+    printf("Optimal cost from start node %d = %d\n", start, costResult);
+
+    printSolution();
+
+    return 0;
+}
